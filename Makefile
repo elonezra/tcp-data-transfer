@@ -1,24 +1,25 @@
-# Makefile for TCP project
+.PHONY: client server clean all local
 
-all: measure sender
+CC=gcc
+CFLAGS=-I. -O3 -Wall -pedantic -g
+DEPS = connection.h
+PORT=12345
 
-measure: measure.c
-	gcc -o measure measure.c
+%.o: %.c $(DEPS)
+		$(CC) -c -o $@ $< $(CFLAGS)
 
-sender: sender.c
-	gcc -o sender sender.c
+all: client server
+
+client: client.o
+		$(CC) -o $@ $^ $(CFLAGS)
+
+server: server.o
+		$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
-	rm -f *.o measure sender
+	rm -f *.o client server
 
-runs:
-	./measure
+local: client server
+	./server $(PORT) &
+	./client localhost $(PORT)
 
-runc:
-	./sender
-
-runs-strace:
-	strace -f ./measure
-
-runc-strace:
-	strace -f ./sender
