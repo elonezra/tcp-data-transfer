@@ -58,11 +58,11 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in serv_addr;
     struct hostent *server;
 
-    //struct Config config = get_config(argc, argv);
-    
+
     // Init buffers
     uint8_t *rbuffer = malloc(DEFAULT_PORT);
-    uint8_t *wbuffer = malloc(DEFAULT_PORT);
+    uint8_t *wbuffer = malloc(DEFAULT_PORT);// will contain the info
+    /// now it contain rubbish
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -92,34 +92,25 @@ int main(int argc, char *argv[]) {
     fflush( stdout );
 
     // Timed send-receive loop
-    uint64_t *times_send = malloc(sizeof(uint64_t) * N_ROUNDS);
-    uint64_t *times_recv = malloc(sizeof(uint64_t) * N_ROUNDS);
     clock_t start,end;
     for (size_t i = 0; i < N_ROUNDS; i++) {
 
-        // uint64_t tstart = rdtscp();
-        // start = clock();
+        
         send_message(DEFAULT_N_BYTES, sockfd, wbuffer);
         
-        // uint64_t tsend = rdtsc();
-        // end = clock();
-     
-        //receive_message(config.n_bytes, sockfd, rbuffer);
+        
+    }
+   sleep(3);
+        for (size_t i = 0; i < N_ROUNDS; i++) {
 
-       // uint64_t tend = rdtsc();
-
-        // times_send[i] = tsend - tstart;
-        // times_recv[i] = tend - tsend;
-        // printf("\nclock() send %lf",(double)(end - start) / CLOCKS_PER_SEC);
-   
+        
+        send_message(DEFAULT_N_BYTES, sockfd, wbuffer);
+        
+        
     }
     close(sockfd);
-    // printf("\nDone!\nSummary: (time_send,\ttime_recv)");
-    // for (size_t i = 0; i < N_ROUNDS; i++) {
-    //     printf("(%" PRIu64 ",\t%" PRIu64 ")\n", times_send[i], times_recv[i]);
-    // }
-    free(times_send);
-    free(times_recv);
+   
+   
     free(rbuffer);
     free(wbuffer);
 

@@ -14,23 +14,32 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#define SIZE 1024
+#define MAX 1024
 #define SERVER_PORT 8080 
 #define SERVER_IP_ADDRESS "127.0.0.1"
 
-void send_file(FILE *fp, int sockfd){
-  int n;
-  char data[SIZE] = {0};
-
-  while(fgets(data, SIZE, fp) != NULL) {
-    if (send(sockfd, data, sizeof(data), 0) == -1) {
-      perror("[-]Error in sending file.");
-      exit(1);
-    }
-    bzero(data, SIZE);
-  }
-}
-
+void send_file(FILE* fp, int sockfd) 
+{ 
+    char buff[MAX]; 
+    int n; 
+    for (int i = 0;i<5;i++) { 
+        bzero(buff, sizeof(buff)); 
+        printf("Enter the string : "); 
+        n = 0; 
+        // while ((buff[n++] = getchar()) != '\n') 
+        //     ; 
+        sprintf(buff, "%d", i);
+        write(sockfd, buff, sizeof(buff)); 
+        bzero(buff, sizeof(buff)); 
+        // read(sockfd, buff, sizeof(buff)); 
+        // printf("From Server : %s", buff); 
+        // if ((strncmp(buff, "exit", 4)) == 0) { 
+        //     printf("Client Exit...\n"); 
+        //     break; 
+        // } 
+    } 
+    write(sockfd, "exit", 4); 
+} 
 int main(){
   char *ip = "127.0.0.1";
   int port = 8081;
@@ -64,11 +73,12 @@ int main(){
     perror("[-]Error in reading file.");
     exit(1);
   }
+  char buffer[10] = {0};
 
-  send_file(fp, sockfd);
-  printf("[+]File data sent successfully.\n");
+    send_file(fp, sockfd);
 
-  printf("[+]Closing the connection.\n");
+
+ shutdown(sockfd, 2); 
   close(sockfd);
 
   return 0;

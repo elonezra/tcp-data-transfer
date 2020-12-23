@@ -78,21 +78,33 @@ int main()
     }
     fcntl(newsockfd, F_SETFL, O_NONBLOCK);//the function to anble syscall
     int flag = 1;
+    char a[255];
     setsockopt(newsockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(int));
-
+    getsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, sizeof(a));
+    printf("\n %s \n", a);
     // Receive-send loop
     printf("Connection accepted, ready to receive!\n");
     int i;
     clock_t start,end;
     for (i = 0; i < N_ROUNDS; i++) {
-        //uint64_t tstart = rdtscp();
         start = clock();
         receive_message(DEFAULT_N_BYTES, newsockfd, buffer);
-        //uint64_t tsend = rdtsc();
         end = clock();
-       // send_message(config.n_bytes, newsockfd, buffer);
-        //printf("time: %ld\n",tsend - tstart);
-        printf("\nclock() send %lf",(double)(end - start) / CLOCKS_PER_SEC);
+             printf("\nclock() send %lf",(double)(end - start) / CLOCKS_PER_SEC);
+
+    }
+    printf("\nDone!\n");
+    printf("change cc\n");
+    setsockopt(newsockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(int));
+
+    // Receive-send loop
+    printf("Connection accepted, ready to receive!\n");
+    
+    for (i = 0; i < N_ROUNDS; i++) {
+        start = clock();
+        receive_message(DEFAULT_N_BYTES, newsockfd, buffer);
+        end = clock();
+             printf("\nclock() send %lf",(double)(end - start) / CLOCKS_PER_SEC);
 
     }
     printf("\nDone!\n");
