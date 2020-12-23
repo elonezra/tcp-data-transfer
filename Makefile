@@ -1,4 +1,4 @@
-.PHONY: client server clean all local
+.PHONY: sender measure clean all local
 
 CC=gcc
 CFLAGS=-I. -O3 -Wall -pedantic -g
@@ -8,18 +8,18 @@ PORT=12345
 %.o: %.c $(DEPS)
 		$(CC) -c -o $@ $< $(CFLAGS)
 
-all: client server
+all: sender measure
 
-client: client.o
+sender: sender.o
 		$(CC) -o $@ $^ $(CFLAGS)
 
-server: server.o
+measure: measure.o
 		$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
-	rm -f *.o client server
+	rm -f *.o sender measure
 
-local: client server
-	./server $(PORT) &
-	./client localhost $(PORT)
+local: sender measure
+	./measure $(PORT) &
+	./sender localhost $(PORT)
 

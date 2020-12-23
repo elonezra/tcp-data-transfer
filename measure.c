@@ -52,6 +52,7 @@ int main()
     //struct Config config = get_config(argc, argv);
     uint8_t *buffer = malloc(DEFAULT_N_BYTES);
     struct sockaddr_in serv_addr, cli_addr;
+    double avg  = 0;
 
     // Create listening socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -77,12 +78,11 @@ int main()
         error("ERROR on accept");
     }
     fcntl(newsockfd, F_SETFL, O_NONBLOCK);//the function to anble syscall
-    int flag = 1;
     char a[255];
     socklen_t len;
     len = sizeof(a);
     getsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, &len);
-    printf("\n cc mode is %s \n", a);
+    printf("\ncc mode is %s\n", a);
     // Receive-send loop
     printf("Connection accepted, ready to receive!\n");
     int i;
@@ -91,17 +91,22 @@ int main()
         start = clock();
         receive_message(DEFAULT_N_BYTES, newsockfd, buffer);
         end = clock();
-             printf("\nclock() send %lf",(double)(end - start) / CLOCKS_PER_SEC);
+        avg += (double)(end - start) / CLOCKS_PER_SEC;
+             printf("\nmessage %d duration: %lf sec",i+1,(double)(end - start) / CLOCKS_PER_SEC);
 
     }
-    printf("\nDone!\n");
     
-    printf("change cc\n");
+    avg /= N_ROUNDS;
+    printf("\n\navarage = %lf ",avg);
+    printf("\nDone!\n");
+    avg = 0;
+    
+    printf("\nchange cc\n");
     strcpy(a, "reno"); 
     len = strlen(a);
     setsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, len);
     getsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, &len);
-    printf("\n cc mode is %s \n", a);
+    printf("cc mode is %s \n", a);
 
     // Receive-send loop
     printf("Connection accepted, ready to receive!\n");
@@ -110,9 +115,12 @@ int main()
         start = clock();
         receive_message(DEFAULT_N_BYTES, newsockfd, buffer);
         end = clock();
-             printf("\nclock() send %lf",(double)(end - start) / CLOCKS_PER_SEC);
+        avg += (double)(end - start) / CLOCKS_PER_SEC;
+        printf("\nmessage %d duration: %lf sec",i+1,(double)(end - start) / CLOCKS_PER_SEC);
 
     }
+    avg /= N_ROUNDS;
+     printf("\navarage = %lf ",avg);
     printf("\nDone!\n");
 
     // Clean state
