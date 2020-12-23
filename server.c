@@ -95,10 +95,11 @@ int main()
 
     }
     printf("\nDone!\n");
+    
     printf("change cc\n");
     strcpy(a, "reno"); 
     len = strlen(a);
-    setsockopt(newsockfd, IPPROTO_TCP, TCP_NODELAY, a, len);
+    setsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, len);
     getsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, &len);
     printf("\n cc mode is %s \n", a);
 

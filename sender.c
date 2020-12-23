@@ -1,85 +1,145 @@
 /*
-	TCP/IP client
-*/ 
-
-
+ *  A client timing the roundtrip time of a message sent to a server multiple times.
+ *  Usage: ./client.out -a <address> -p <port> -b <message_size (bytes)>
+ */
 #include <stdio.h>
-
-#include <stdlib.h> 
-#include <errno.h> 
-#include <string.h> 
-#include <sys/types.h> 
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h> 
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <unistd.h>
-
-#define MAX 1024
-#define SERVER_PORT 8080 
-#define SERVER_IP_ADDRESS "127.0.0.1"
-
-void send_file(FILE* fp, int sockfd) 
-{ 
-    char buff[MAX]; 
-    int n; 
-    for (int i = 0;i<5;i++) { 
-        bzero(buff, sizeof(buff)); 
-        printf("Enter the string : "); 
-        n = 0; 
-        // while ((buff[n++] = getchar()) != '\n') 
-        //     ; 
-        sprintf(buff, "%d", i);
-        write(sockfd, buff, sizeof(buff)); 
-        bzero(buff, sizeof(buff)); 
-        // read(sockfd, buff, sizeof(buff)); 
-        // printf("From Server : %s", buff); 
-        // if ((strncmp(buff, "exit", 4)) == 0) { 
-        //     printf("Client Exit...\n"); 
-        //     break; 
-        // } 
-    } 
-    write(sockfd, "exit", 4); 
-} 
-int main(){
-  char *ip = "127.0.0.1";
-  int port = 8081;
-  int e;
-
-  int sockfd;
-  struct sockaddr_in server_addr;
-  FILE *fp;
-  char *filename = "1gb.txt";
-
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if(sockfd < 0) {
-    perror("[-]Error in socket");
-    exit(1);
-  }
-  printf("[+]Server socket created successfully.\n");
-
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_port = port;
-  server_addr.sin_addr.s_addr = inet_addr(ip);
-
-  e = connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
-  if(e == -1) {
-    perror("[-]Error in socket");
-    exit(1);
-  }
- printf("[+]Connected to Server.\n");
-
-  fp = fopen(filename, "r");
-  if (fp == NULL) {
-    perror("[-]Error in reading file.");
-    exit(1);
-  }
-  char buffer[10] = {0};
-
-    send_file(fp, sockfd);
+#include <fcntl.h>
+#include <netinet/tcp.h>
+#include <inttypes.h>
+#include <ctype.h>
+#include <errno.h>
 
 
- shutdown(sockfd, 2); 
-  close(sockfd);
+#define DEFAULT_N_BYTES 1048576
+#define DEFAULT_PORT 8787
+#define DEFAULT_ADDRESS "127.0.0.1"
+#define N_ROUNDS 5
+//#include "connection.h"
 
-  return 0;
+void error(char *msg)
+{
+    perror(msg);
+    exit(0);
 }
+
+void panic(char *msg)
+{
+    perror(msg);
+    exit(0);
+}
+
+uint8_t * getfile( ) 
+{ 
+    int n; 
+    FILE *fp;
+    char *filename = "1mb.txt";
+
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+      perror("[-]Error in reading file.");
+      exit(1);
+    }
+    fseek(fp, 0, SEEK_END); // seek to end of file
+    size_t size = ftell(fp); // get current file pointer
+    fseek(fp, 0, SEEK_SET); // seek back to beginning of file
+    printf("the size of file %ld\n", size);
+    uint8_t *wbuffer = malloc(size);
+    int i = 0;
+    char temp;
+     while ((temp =  fgetc( fp )) != EOF)
+     {
+         *(wbuffer + i++) = temp;
+     }
+
+    return wbuffer;
+    
+} 
+
+int send_message(size_t n_bytes, int sockfd, uint8_t *buffer) {
+    int bytes_sent = 0;
+    int r;
+    while (bytes_sent < n_bytes) {
+	// Make sure we write exactly n_bytes
+        r = write(sockfd, buffer, n_bytes - bytes_sent);
+        if (r < 0 && !(errno == EAGAIN || errno == EWOULDBLOCK)) {
+            panic("ERROR writing to socket");
+        }
+        if (r > 0) {
+            bytes_sent += r;
+        }
+    }
+    return bytes_sent;
+}
+
+int main(int argc, char *argv[]) {
+    int sockfd;
+    struct sockaddr_in serv_addr;
+    struct hostent *server;
+
+
+    // Init buffers
+    uint8_t *wbuffer =  getfile();//malloc(DEFAULT_N_BYTES);// will contain the info
+    /// now it contain rubbish
+
+   
+
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        error("ERROR opening socket");
+    }
+    server = gethostbyname(DEFAULT_ADDRESS);
+    if (server == NULL) {
+        fprintf(stderr,"ERROR, no such host\n");
+        exit(0);
+    }
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    bcopy((char *)server->h_addr, 
+         (char *)&serv_addr.sin_addr.s_addr,
+         server->h_length);
+    serv_addr.sin_port = htons(DEFAULT_PORT);
+
+    // Connect and set nonblocking and nodelay
+    if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) {
+        error("ERROR connecting");
+    }
+    fcntl(sockfd, F_SETFL, O_NONBLOCK);
+    int flag = 1;
+    setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(int));
+
+    printf("Connection successful! Starting...");
+    fflush( stdout );
+
+    // Timed send-receive loop
+    clock_t start,end;
+    for (size_t i = 0; i < N_ROUNDS; i++) {
+
+        
+        send_message(DEFAULT_N_BYTES, sockfd, wbuffer);
+        
+        
+    }
+   //sleep(3);
+        for (size_t i = 0; i < N_ROUNDS; i++) {
+
+        
+        send_message(DEFAULT_N_BYTES, sockfd, wbuffer);
+        
+        
+    }
+    close(sockfd);
+   
+    free(wbuffer);
+
+    return 0;
+}
+

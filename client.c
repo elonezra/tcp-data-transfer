@@ -36,6 +36,32 @@ void panic(char *msg)
     exit(0);
 }
 
+uint8_t * getfile( ) 
+{ 
+    int n; 
+    FILE *fp;
+    char *filename = "1mb.txt";
+
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+      perror("[-]Error in reading file.");
+      exit(1);
+    }
+    fseek(fp, 0, SEEK_END); // seek to end of file
+    size_t size = ftell(fp); // get current file pointer
+    fseek(fp, 0, SEEK_SET); // seek back to beginning of file
+    printf("the size of file %ld\n", size);
+    uint8_t *wbuffer = malloc(size);
+    int i = 0;
+    char temp;
+     while ((temp =  fgetc( fp )) != EOF)
+     {
+         *(wbuffer + i++) = temp;
+     }
+
+    return wbuffer;
+    
+} 
 
 int send_message(size_t n_bytes, int sockfd, uint8_t *buffer) {
     int bytes_sent = 0;
@@ -60,9 +86,11 @@ int main(int argc, char *argv[]) {
 
 
     // Init buffers
-    uint8_t *rbuffer = malloc(DEFAULT_PORT);
-    uint8_t *wbuffer = malloc(DEFAULT_PORT);// will contain the info
+    uint8_t *wbuffer =  getfile();//malloc(DEFAULT_N_BYTES);// will contain the info
     /// now it contain rubbish
+
+   
+
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -110,8 +138,6 @@ int main(int argc, char *argv[]) {
     }
     close(sockfd);
    
-   
-    free(rbuffer);
     free(wbuffer);
 
     return 0;
