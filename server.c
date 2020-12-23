@@ -79,9 +79,10 @@ int main()
     fcntl(newsockfd, F_SETFL, O_NONBLOCK);//the function to anble syscall
     int flag = 1;
     char a[255];
-    setsockopt(newsockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(int));
-    getsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, sizeof(a));
-    printf("\n %s \n", a);
+    socklen_t len;
+    len = sizeof(a);
+    getsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, &len);
+    printf("\n cc mode is %s \n", a);
     // Receive-send loop
     printf("Connection accepted, ready to receive!\n");
     int i;
@@ -95,7 +96,11 @@ int main()
     }
     printf("\nDone!\n");
     printf("change cc\n");
-    setsockopt(newsockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(int));
+    strcpy(a, "reno"); 
+    len = strlen(a);
+    setsockopt(newsockfd, IPPROTO_TCP, TCP_NODELAY, a, len);
+    getsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, &len);
+    printf("\n cc mode is %s \n", a);
 
     // Receive-send loop
     printf("Connection accepted, ready to receive!\n");

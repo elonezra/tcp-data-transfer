@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
         
         
     }
-   sleep(3);
+   //sleep(3);
         for (size_t i = 0; i < N_ROUNDS; i++) {
 
         
