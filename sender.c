@@ -102,6 +102,21 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
     bzero((char *) &serv_addr, sizeof(serv_addr));
+	
+	/**
+	 An IP socket address is defined as a combination of an IP
+       interface address and a 16-bit port number.  The basic IP
+       protocol does not supply port numbers, they are implemented by
+       higher level protocols like udp(7) and tcp(7).  On raw sockets
+       sin_port is set to the IP protocol.
+
+           struct sockaddr_in {
+               sa_family_t    sin_family; /* address family: AF_INET */
+            // in_port_t      sin_port;   /* port in network byte order */
+            //   struct in_addr sin_addr;   /* internet address */
+          // };
+	**/
+	
     serv_addr.sin_family = AF_INET;
     bcopy((char *)server->h_addr, 
          (char *)&serv_addr.sin_addr.s_addr,
