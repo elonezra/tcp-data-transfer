@@ -69,7 +69,9 @@ int main()
     }
     printf("Server ready, listening on port %d\n", DEFAULT_PORT); 
     fflush(stdout);
-    listen(sockfd, 5);
+	
+    listen(sockfd, 5); // listen for connections on a socket
+	
     socklen_t clilen = sizeof(cli_addr);
 
     // Accept connection and set nonblocking and nodelay
@@ -81,10 +83,13 @@ int main()
     char a[255];
     socklen_t len;
     len = sizeof(a);
-    getsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, &len);
+    getsockopt(newsockfd, IPPROTO_TCP, TCP_CONGESTION, a, &len);// we get the cc mode cubic or reno
+	
     printf("\ncc mode is %s\n", a);
+	
     // Receive-send loop
     printf("Connection accepted, ready to receive!\n");
+	
     int i;
     clock_t start,end;
     for (i = 0; i < N_ROUNDS; i++) {
