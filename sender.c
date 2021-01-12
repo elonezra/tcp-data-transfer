@@ -109,13 +109,13 @@ int main(int argc, char *argv[]) {
        protocol does not supply port numbers, they are implemented by
        higher level protocols like udp(7) and tcp(7).  On raw sockets
        sin_port is set to the IP protocol.
-
+	
            struct sockaddr_in {
                sa_family_t    sin_family; /* address family: AF_INET */
             // in_port_t      sin_port;   /* port in network byte order */
             //   struct in_addr sin_addr;   /* internet address */
           // };
-	**/
+	
 	
     serv_addr.sin_family = AF_INET;
     bcopy((char *)server->h_addr, 
@@ -128,15 +128,23 @@ int main(int argc, char *argv[]) {
     if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) {
         error("ERROR connecting");
     }
+    
+    //manipulate file descriptor
+	/**
+	F_SETFL -  order to set a file status to the next atrib. O_NONBLOCK
+	O_NONBLOCK - unblock system calls mandatory lock
+	**/
     fcntl(sockfd, F_SETFL, O_NONBLOCK);
+	
     int flag = 1;
-    setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(int));
+    //setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(int));
 
     printf("Connection successful! Starting...");
     fflush( stdout );
 
     // Timed send-receive loop
     clock_t start,end;
+	
     for (size_t i = 0; i < N_ROUNDS; i++) {
 
         
