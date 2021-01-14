@@ -1,7 +1,3 @@
-/*
- *  A server receiving and sending back a message multiple times.
- *  Usage: ./server.out -p <port> -n <message_size (bytes)>
- */
 #include <stdio.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
